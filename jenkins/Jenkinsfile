@@ -18,6 +18,7 @@ pipeline {
             steps {
                 sh './jenkins/scripts/deliver.sh'
                 sh 'pwd'
+                sh 'ls'
             }
         }
         // stage('Build Image') {
