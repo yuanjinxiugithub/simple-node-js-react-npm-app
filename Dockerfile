@@ -1,7 +1,9 @@
 FROM node:latest
 WORKDIR /app
 
-COPY build ./build
+COPY . .
+
+RUN npm install  && npm run build 
 
 RUN  npm install -g serve
 
