@@ -21,11 +21,11 @@ pipeline {
                 sh 'ls'
             }
         }
-        // stage('Build Image') {
-        //     steps {
-        //         sh 'docker build -t app-node .'
-        //         sh 'docker images'
-        //     }
-        // }
+        stage('Build Image') {
+            steps {
+                sh 'docker build -t app-node .'
+                sh 'docker images'
+            }
+        }
     }
 }
