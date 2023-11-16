@@ -17,13 +17,14 @@ pipeline {
         stage('Build ') {
             steps {
                 sh './jenkins/scripts/deliver.sh'
+                sh 'pwd'
             }
         }
-        stage('Build Image') {
-            steps {
-                sh 'docker build -t app-node .'
-                sh 'docker images'
-            }
-        }
+        // stage('Build Image') {
+        //     steps {
+        //         sh 'docker build -t app-node .'
+        //         sh 'docker images'
+        //     }
+        // }
     }
 }
