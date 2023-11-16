@@ -29,7 +29,8 @@ pipeline {
         }
         stage('Deploy'){
             steps{
-                sh 'docker run -d -p 3000:3000 --name=app-node app-node'
+                sh 'docker-compose up -d'
+                sh 'docker ps'
             }
         }
     }
