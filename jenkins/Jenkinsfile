@@ -1,37 +1,123 @@
-pipeline {
-    agent  any
-    environment {
-        CI = 'true'
+pipeline{
+  agent any
+
+  parameters {
+    gitParameter branchFilter: 'origin/(.*)', defaultValue: 'master', name: 'BRANCH', type: 'PT_BRANCH'
+  }  
+
+  stages {
+    stage('Verify tooling'){
+      steps{
+        sh '''
+        docker version
+        docker info
+        node -v
+        npm -v
+        yarn -v
+        export PATH=$HOME/bin:$PATH
+        bit -v
+        '''
+      }
     }
-    stages {
-        stage('Build') {
-            steps {
-                sh 'npm install'
-            }
+
+    stage('Select the Environment'){
+      input {
+        message 'Select the enviroment:'
+        parameters {
+          choice(name: 'ENVIRONMENT', choices: ['DEV', 'TEST'])
         }
-        // stage('Test') {
-        //     steps {
-        //         sh './jenkins/scripts/test.sh'
-        //     }
-        // }
-        stage('Build ') {
-            steps {
-                sh './jenkins/scripts/deliver.sh'
-                sh 'pwd'
-                sh 'ls'
-            }
+      }
+      steps{
+        script{
+          env.target = "${ENVIRONMENT}"
         }
-        stage('Build Image') {
-            steps {
-                sh 'docker build -t app-node .'
-                sh 'docker images'
+        echo "Selected environment: ${ENVIRONMENT}"
+      }
+    }
+
+    stage('Setup envs'){
+      steps{
+        script {
+            env.REGISTRY = "registry.manyun-inc.com"
+            env.SERVICE_NAME = "app-node"
+            env.TAG = "latest"
+            // 镜像名称
+            env.IMAGE_NAME = "${REGISTRY}/${SERVICE_NAME}:${TAG}"
+            env.REMOTE_SERVER = ""
+            env.ENV_FILE = ""
+            //ssh 登陆密钥
+            env.SSH_CREDENTIALS = ""
+            env.NODE_ENV = "development"
+            env.BUILD_ENV = "development"
+            env.RSA_ENCRYPTION_PUBLIC_KEY = ""
+
+            if(env.target == 'DEV'){
+               env.TAG = "dev"
+               env.REMOTE_SERVER = "172.16.0.41"
+               env.ENV_FILE = ".env.dev"
+               env.SSH_CREDENTIALS = "dev41_jerry"
+            } else if (env.target == "TEST") {
+               env.TAG = "test"
+               env.REMOTE_SERVER = "172.16.0.201"
+               env.ENV_FILE = ".env.test"
+               env.SSH_CREDENTIALS = "dev15_jerry"
+               env.BUILD_ENV = "test-ci"
             }
+            env.IMAGE_NAME = "${REGISTRY}/${SERVICE_NAME}:${TAG}"
         }
-        stage('Deploy'){
-            steps{
-                sh 'docker-compose up -d'
-                sh 'docker ps'
-            }
+        sh '''
+          echo "REGISTRY = ${REGISTRY}"
+          echo "REMOTE_SERVER = ${REMOTE_SERVER}"
+          echo "TAG = ${TAG}"
+          echo "ENV_FILE = ${ENV_FILE}"
+          echo "IMAGE_NAME=${IMAGE_NAME}"
+          echo "BUILD_ENV = ${BUILD_ENV}"
+        '''
+      }
+
+    }
+
+    stage('Git Checkout'){
+      steps{
+         checkout poll: false, scm: [$class: 'GitSCM', branches: [[name: "${params.BRANCH}"]], extensions: [], userRemoteConfigs: [[url: 'https://github.com/yuanjinxiugithub/simple-node-js-react-npm-app.git']]]
+      }
+    }
+
+    stage('Build App'){
+        steps {
+          sh '''
+           pwd
+          '''
         }
     }
+
+    stage('Build Image'){
+      steps {
+        sh '''
+        '''
+      }
+    }
+
+    stage('Push Image'){
+       steps {
+        sh '''
+          echo "push"
+        '''
+      }
+    }
+    stage('Deploy'){
+      steps{
+        sh '''
+        echo "deploy"
+         sed "1,3d" ${ENV_FILE} > .env
+          echo >> .env
+          echo "TAG=${TAG}" >> .env
+          echo "PORT=${PORT}" >> .env
+          echo "SUBNET=${SUBNET}" >> .env
+          cat .env
+        '''
+      }
+    }
+
+  }
 }

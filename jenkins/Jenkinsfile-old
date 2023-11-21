@@ -1,0 +1,32 @@
+pipeline {
+    agent  any
+    environment {
+        CI = 'true'
+    }
+    stages {
+        stage('Build') {
+            steps {
+                sh 'npm install'
+            }
+        }
+        stage('Build ') {
+            steps {
+                sh './jenkins/scripts/deliver.sh'
+                sh 'pwd'
+                sh 'ls'
+            }
+        }
+        stage('Build Image') {
+            steps {
+                sh 'docker build -t app-node .'
+                sh 'docker images'
+            }
+        }
+        stage('Deploy'){
+            steps{
+                sh 'docker-compose up -d'
+                sh 'docker ps'
+            }
+        }
+    }
+}
